@@ -25,7 +25,7 @@ pip install tqdm
 pip install bert-tensorflow
 pip install sqlalchemy
 
-(that should be all, if not please don't hesitate to send an issue.
+(that should be all, if not please don't hesitate to send an issue.)
 
 ## Apply Patch
 

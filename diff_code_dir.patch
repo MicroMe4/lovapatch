@@ -1,0 +1,104 @@
+diff --git a/annotate_ws.py b/annotate_ws.py
+index a6b6ad5..5c8e437 100644
+--- a/annotate_ws.py
++++ b/annotate_ws.py
+@@ -79,9 +79,7 @@ def check_wv_tok_in_nlu_tok(wv_tok1, nlu_t1):
+     """
+     Jan.2019: Wonseok
+     Generate SQuAD style start and end index of wv in nlu. Index is for of after WordPiece tokenization.
+-
+     Assumption: where_str always presents in the nlu.
+-
+     return:
+     st_idx of where-value string token in nlu under CoreNLP tokenization scheme.
+     """
+@@ -153,8 +151,9 @@ def is_valid_example(e):
+ 
+ if __name__ == '__main__':
+     parser = ArgumentParser(formatter_class=ArgumentDefaultsHelpFormatter)
+-    parser.add_argument('--din', default='/Users/wonseok/data/WikiSQL-1.1/data', help='data directory')
+-    parser.add_argument('--dout', default='/Users/wonseok/data/wikisql_tok', help='output directory')
++    cur = os.getcwd()
++    parser.add_argument('--din', default=os.path.join(cur,"data_and_model"), help='data directory')
++    parser.add_argument('--dout', default=os.path.join(cur,"data_and_model"), help='output directory')
+     parser.add_argument('--split', default='train,dev,test', help='comma=separated list of splits to process')
+     args = parser.parse_args()
+ 
+@@ -193,4 +192,4 @@ if __name__ == '__main__':
+                 if answer_toy:
+                     if cnt > toy_size:
+                         break
+-            print('wrote {} examples'.format(n_written))
++            print('wrote {} examples'.format(n_written))
+\ No newline at end of file
+diff --git a/evaluate_ws.py b/evaluate_ws.py
+index b5878a5..8082e06 100644
+--- a/evaluate_ws.py
++++ b/evaluate_ws.py
+@@ -21,12 +21,12 @@ if __name__ == '__main__':
+     saved_epoch = 'best'  # 30-162
+ 
+     # Set path
+-    path_h = '/home/wonseok' # change to your home folder
+-    path_wikisql_tok = os.path.join(path_h, 'data', 'wikisql_tok')
++    path_h = os.getcwd()
++    path_wikisql_tok = os.path.join(path_h, 'data_and_model', 'tok')
+     path_save_analysis = '.'
+ 
+     # Path for evaluation results.
+-    path_wikisql0 = os.path.join(path_h,'data/WikiSQL-1.1/data')
++    path_wikisql0 = os.path.join(path_h,'data_and_model')
+     path_source = os.path.join(path_wikisql0, f'{mode}.jsonl')
+     path_db = os.path.join(path_wikisql0, f'{mode}.db')
+     path_pred = os.path.join(path_save_analysis, f'results_{mode}.jsonl')
+diff --git a/train.py b/train.py
+index 5bfdb7b..6a7b79b 100644
+--- a/train.py
++++ b/train.py
+@@ -15,8 +15,8 @@ import random as python_random
+ # import torchvision.datasets as dsets
+ 
+ # BERT
+-import bert.tokenization as tokenization
+-from bert.modeling import BertConfig, BertModel
++import bertfam.tokenization as tokenization
++from bertfam.modeling import BertConfig, BertModel
+ 
+ from sqlova.utils.utils_wikisql import *
+ from sqlova.utils.utils import load_jsonl
+@@ -667,10 +667,9 @@ if __name__ == '__main__':
+         model, model_bert, tokenizer, bert_config = get_models(args, BERT_PT_PATH)
+     else:
+         # To start from the pre-trained models, un-comment following lines.
+-        path_model_bert = './data_and_model/model_bert_best.pt'
+-        path_model = './data_and_model/model_best.pt'
+-        model, model_bert, tokenizer, bert_config = get_models(args, BERT_PT_PATH, trained=True,
+-                                                               path_model_bert=path_model_bert, path_model=path_model)
++        # path_model_bert = './data_and_model/model_bert_best.pt'
++        # path_model = './data_and_model/model_best.pt'
++        model, model_bert, tokenizer, bert_config = get_models(args, BERT_PT_PATH, trained=True,path_model_bert=path_model_bert, path_model=path_model)
+ 
+     ## 5. Get optimizers
+     if args.do_train:
+@@ -681,20 +680,7 @@ if __name__ == '__main__':
+         epoch_best = -1
+         for epoch in range(args.tepoch):
+             # train
+-            acc_train, aux_out_train = train(train_loader,
+-                                             train_table,
+-                                             model,
+-                                             model_bert,
+-                                             opt,
+-                                             bert_config,
+-                                             tokenizer,
+-                                             args.max_seq_length,
+-                                             args.num_target_layers,
+-                                             args.accumulate_gradients,
+-                                             opt_bert=opt_bert,
+-                                             st_pos=0,
+-                                             path_db=path_wikisql,
+-                                             dset_name='train')
++            acc_train, aux_out_train = train(train_loader,train_table, model,model_bert,opt,bert_config,tokenizer,args.max_seq_length,args.num_target_layers,args.accumulate_gradients,opt_bert=opt_bert,st_pos=0,path_db=path_wikisql,dset_name='train')
+ 
+             # check DEV
+             with torch.no_grad():

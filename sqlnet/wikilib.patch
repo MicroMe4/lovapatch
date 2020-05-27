@@ -1,0 +1,51 @@
+diff --git a/sqlnet/dbengine.py b/sqlnet/dbengine.py
+index 947519c..90d0f40 100644
+--- a/sqlnet/dbengine.py
++++ b/sqlnet/dbengine.py
+@@ -19,6 +19,7 @@ class DBEngine:
+     def __init__(self, fdb):
+         #fdb = 'data/test.db'
+         self.db = records.Database('sqlite:///{}'.format(fdb))
++        self.conn = self.db.get_connection()
+ 
+     def execute_query(self, table_id, query, *args, **kwargs):
+         return self.execute(table_id, query.sel_index, query.agg_index, query.conditions, *args, **kwargs)
+@@ -26,7 +27,7 @@ class DBEngine:
+     def execute(self, table_id, select_index, aggregation_index, conditions, lower=True):
+         if not table_id.startswith('table'):
+             table_id = 'table_{}'.format(table_id.replace('-', '_'))
+-        table_info = self.db.query('SELECT sql from sqlite_master WHERE tbl_name = :name', name=table_id).all()[0].sql.replace('\n','')
++        table_info = self.conn.query('SELECT sql from sqlite_master WHERE tbl_name = :name', name=table_id).all()[0].sql.replace('\n','')
+         schema_str = schema_re.findall(table_info)[0]
+         schema = {}
+         for tup in schema_str.split(', '):
+@@ -61,10 +62,9 @@ class DBEngine:
+             where_str = 'WHERE ' + ' AND '.join(where_clause)
+         query = 'SELECT {} AS result FROM {} {}'.format(select, table_id, where_str)
+         #print query
+-        out = self.db.query(query, **where_map)
+-
+-
++        out = self.conn.query(query, **where_map)
+         return [o.result for o in out]
++
+     def execute_return_query(self, table_id, select_index, aggregation_index, conditions, lower=True):
+         if not table_id.startswith('table'):
+             table_id = 'table_{}'.format(table_id.replace('-', '_'))
+@@ -99,12 +99,11 @@ class DBEngine:
+             where_str = 'WHERE ' + ' AND '.join(where_clause)
+         query = 'SELECT {} AS result FROM {} {}'.format(select, table_id, where_str)
+         #print query
+-        out = self.db.query(query, **where_map)
+-
+-
++        out = self.conn.query(query, **where_map)
+         return [o.result for o in out], query
++
+     def show_table(self, table_id):
+         if not table_id.startswith('table'):
+             table_id = 'table_{}'.format(table_id.replace('-', '_'))
+-        rows = self.db.query('select * from ' +table_id)
++        rows = self.conn.query('select * from ' +table_id)
+         print(rows.dataset)
+\ No newline at end of file
